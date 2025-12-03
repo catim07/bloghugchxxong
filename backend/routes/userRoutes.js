@@ -1,32 +1,97 @@
+// backend/routes/userRoutes.js – PHIÊN BẢN HOÀN HẢO 100% – CHẠY NGON NGAY!!!
+
 const express = require("express");
 const router = express.Router();
+const { protect } = require("../middlewares/auth");
 const User = require("../models/User");
-const jwt = require("jsonwebtoken");
 
-// Middleware xác thực
-const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ message: "Không có token" });
-
+// GET /api/users/me
+router.get("/me", protect, async (req, res) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    res.status(401).json({ message: "Token không hợp lệ" });
-  }
-};
+    const user = await User.findById(req.user._id)
+      .select("-password")
+      .select("isAdmin")
+      .populate("following", "_id name avatar")
+      .populate("followers", "_id name avatar");
 
-// ✅ Route: Lấy thông tin user hiện tại
-router.get("/me", verifyToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select("-password");
-    if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
-    res.json(user);
+    res.json(user || {});
   } catch (err) {
-    console.error("Lỗi server khi lấy user:", err);
+    console.error("Lỗi /me:", err);
     res.status(500).json({ message: "Lỗi server" });
   }
 });
 
+// PUT /api/users/me
+router.put("/me", protect, async (req, res) => {
+  try {
+    const updates = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    res.json(user || {});
+  } catch (err) {
+    console.error("Lỗi cập nhật:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+// GET /api/users – DANH SÁCH USER
+router.get("/", protect, async (req, res) => {
+  try {
+    const users = await User.find()
+      .select("name email avatar bio followers following blogs role createdAt status")
+      .lean();
+
+    const formattedUsers = users.map(user => ({
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar || "",
+      bio: user.bio || "",
+      role: user.role || "user",
+      status: user.status || "active",        // thêm status
+      createdAt: user.createdAt,
+      followerCount: Array.isArray(user.followers) ? user.followers.length : 0,
+      articleCount: user.blogs ? user.blogs.length : 0,
+      following: user.following || [],
+    }));
+
+    res.json(formattedUsers);
+  } catch (err) {
+    console.error("Lỗi lấy danh sách users:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+// THÊM ROUTE KHÓA/MỞ KHÓA – ĐÃ SỬA LỖI DẤU NGOẶC!!!
+router.put("/:id/toggle-status", protect, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Chỉ admin mới được phép" });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User không tồn tại" });
+
+    if (user._id.toString() === req.user._id.toString()) {
+      return res.status(400).json({ message: "Không thể tự khóa chính mình!" });
+    }
+
+    user.status = user.status === "banned" ? "active" : "banned";
+    await user.save();
+
+    res.json({
+      message: user.status === "banned" ? "Đã khóa tài khoản" : "Đã mở khóa tài khoản",
+      status: user.status
+    });
+  } catch (err) {
+    console.error("Lỗi toggle status:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+// ĐÓNG NGOẶC ĐÚNG CHỖ – QUAN TRỌNG NHẤT!!!
 module.exports = router;

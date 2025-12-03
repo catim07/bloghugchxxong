@@ -2,6 +2,7 @@ import { Search, Moon, Sun, PenSquare, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { NotificationBell } from "./NotificationBell";
 
 interface NavigationProps {
   darkMode: boolean;
@@ -11,6 +12,10 @@ interface NavigationProps {
   onAuthClick?: () => void;
   onLogout?: () => void; // 🔹 Thêm props logout
   isLoggedIn?: boolean;
+  currentUser?: {
+    name?: string;
+    avatar?: string;
+  } | null;
 }
 
 export function Navigation({
@@ -21,6 +26,7 @@ export function Navigation({
   onAuthClick,
   onLogout,
   isLoggedIn = false,
+  currentUser
 }: NavigationProps) {
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -55,7 +61,7 @@ export function Navigation({
                 Viết bài
               </Button>
             )}
-
+            {isLoggedIn && <NotificationBell />}
             {/* Dark Mode Toggle */}
             <Button
               variant="ghost"
@@ -80,7 +86,7 @@ export function Navigation({
                     onClick={onProfileClick}
                   >
                     <AvatarImage src="https://i.pravatar.cc/150?img=1" />
-                    <AvatarFallback>U</AvatarFallback>
+                    <AvatarFallback>{currentUser?.name?.[0]?.toUpperCase() || "U"}</AvatarFallback>
                   </Avatar>
                 )}
 

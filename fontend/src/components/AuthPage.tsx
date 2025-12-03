@@ -7,11 +7,15 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { Separator } from "./ui/separator";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Mail, Lock, Eye, EyeOff, User, Chrome } from "lucide-react";
-import { motion } from "motion/react";
+import { motion } from "motion/react"; // Giữ nguyên import của bạn
 import axios from "axios";
+
+// Thêm biến môi trường – CHỈ ĐỔI Ở .env LÀ XONG!
+const API_URL = import.meta.env.VITE_API_URL;
+
 interface AuthPageProps {
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (user: any, token: string) => void;
 }
 
 export function AuthPage({ onClose, onSuccess }: AuthPageProps) {
@@ -25,62 +29,79 @@ export function AuthPage({ onClose, onSuccess }: AuthPageProps) {
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
 
-
   const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
-  try {
-    const res = await axios.post("http://localhost:5000/api/auth/login", {
-      email: loginEmail,
-      password: loginPassword,
-    });
-    localStorage.setItem("token", res.data.token); // lưu token
-    console.log("Login success:", res.data);
-    onSuccess();
-  } catch (err: any) {
-    console.error("Login error:", err.response?.data || err.message);
-    alert(err.response?.data?.message || "Đăng nhập thất bại");
-  }
-};
+    e.preventDefault();
+    try {
+      const res = await axios.post(`${API_URL}/api/auth/login`, { // Thay localhost
+        email: loginEmail,
+        password: loginPassword,
+      });
 
-// ✅ Đăng ký (không tự đăng nhập)
-const handleRegister = async (e: React.FormEvent) => {
-  e.preventDefault();
+      const { user, token } = res.data;
+      if (!token) {
+        alert("Không nhận được token từ server!");
+        return;
+      }
 
-  // ✅ Xóa token cũ (nếu có)
-  localStorage.removeItem("token");
+      localStorage.setItem("token", token);
+      console.log("Login success:", res.data);
 
-  if (registerPassword !== registerConfirmPassword) {
-    alert("Mật khẩu không khớp!");
-    return;
-  }
+      onSuccess(user, token); // ✅ Gửi dữ liệu về App.tsx
+      window.location.reload();
+    } catch (err: any) {
+      console.error("Login error:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Đăng nhập thất bại");
+    }
+  };
 
-  try {
-    const res = await axios.post("http://localhost:5000/api/auth/register", {
-      name: registerName,
-      email: registerEmail,
-      password: registerPassword,
-    });
+  // ✅ Đăng ký (không tự đăng nhập)
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    alert("Đăng ký thành công! Hãy đăng nhập để tiếp tục.");
-    console.log("Register success:", res.data);
+    // ✅ Xóa token cũ (nếu có)
+    localStorage.removeItem("token");
 
-    // ✅ Không lưu token, không gọi setIsLogin
-    // => Chuyển sang tab "Đăng nhập" sau khi đăng ký thành công
-    const loginTab = document.querySelector('[data-state="active"][value="register"]');
-    const loginTrigger = document.querySelector('[value="login"]') as HTMLElement;
-    setActiveTab("login");
-  } catch (err: any) {
-    console.error("Register error:", err.response?.data || err.message);
-    alert(err.response?.data?.message || "Đăng ký thất bại");
-  }
-  
-};
+    if (registerPassword !== registerConfirmPassword) {
+      alert("Mật khẩu không khớp!");
+      return;
+    }
 
+    try {
+      const res = await axios.post(`${API_URL}/api/auth/register`, { // Thay localhost
+        name: registerName,
+        email: registerEmail,
+        password: registerPassword,
+      });
+
+      alert("Đăng ký thành công! Hãy đăng nhập để tiếp tục.");
+      console.log("Register success:", res.data);
+
+      // ✅ Không lưu token, không gọi setIsLogin
+      // => Chuyển sang tab "Đăng nhập" sau khi đăng ký thành công
+      const loginTab = document.querySelector('[data-state="active"][value="register"]');
+      const loginTrigger = document.querySelector('[value="login"]') as HTMLElement;
+      setActiveTab("login");
+    } catch (err: any) {
+      console.error("Register error:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Đăng ký thất bại");
+    }
+  };
 
   const handleGoogleLogin = () => {
-    // Mock Google login
     console.log("Google login");
-    onSuccess();
+    
+    // Giả lập thông tin user và token như khi login thường
+    const mockUser = {
+      id: "google123",
+      name: "Google User",
+      email: "googleuser@gmail.com",
+      role: "user",
+    };
+    
+    const mockToken = "mock-google-token"; // token giả
+    
+    localStorage.setItem("token", mockToken);
+    onSuccess(mockUser, mockToken); // ✅ truyền đúng dữ liệu
   };
 
   return (
@@ -199,7 +220,7 @@ const handleRegister = async (e: React.FormEvent) => {
                 </Button>
               </div>
 
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)} defaultValue="login" className="w-full">
+              <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} defaultValue="login" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-8">
                   <TabsTrigger value="login">Đăng nhập</TabsTrigger>
                   <TabsTrigger value="register">Đăng ký</TabsTrigger>

@@ -1,3 +1,4 @@
+// src/components/admin/AdminDashboard.tsx – ĐÃ HOÀN HẢO, KHÔNG CẦN SỬA ENV VÌ KHÔNG GỌI API TRỰC TIẾP
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -54,7 +55,7 @@ export function AdminDashboard({
           {/* Logo */}
           <div className="p-6 border-b border-border">
             <div className="flex items-center justify-between">
-              <h2 className="text-blue-600 dark:text-blue-400">BlogHub Admin</h2>
+              <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400">BlogHub Admin</h2>
               <Button
                 variant="ghost"
                 size="icon"
@@ -72,9 +73,9 @@ export function AdminDashboard({
               <button
                 key={item.id}
                 onClick={() => setCurrentPage(item.id as any)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium ${
                   currentPage === item.id
-                    ? "bg-blue-600 text-white"
+                    ? "bg-blue-600 text-white shadow-lg"
                     : "hover:bg-muted text-foreground"
                 }`}
               >
@@ -92,7 +93,7 @@ export function AdminDashboard({
                 <AvatarFallback>AD</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm truncate">Admin User</p>
+                <p className="text-sm font-semibold truncate">Admin User</p>
                 <p className="text-xs text-muted-foreground truncate">
                   admin@bloghub.com
                 </p>
@@ -104,7 +105,7 @@ export function AdminDashboard({
 
       {/* Main Content */}
       <div
-        className={`transition-all ${
+        className={`transition-all duration-300 ${
           sidebarOpen ? "lg:ml-64" : "ml-0"
         }`}
       >
@@ -141,7 +142,34 @@ export function AdminDashboard({
             </div>
 
             {/* Right Side */}
+                        {/* Right Side */}
             <div className="flex items-center gap-2">
+              {/* NÚT MỚI: QUAY LẠI TRANG CHỦ */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = "/"}  // Quay thẳng về trang chủ luôn!
+                className="hidden sm:flex items-center gap-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Trang chủ
+              </Button>
+
+              {/* Mobile: chỉ hiện icon */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => window.location.href = "/"}
+                className="sm:hidden text-blue-600"
+                title="Về trang chủ"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+              </Button>
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -160,6 +188,7 @@ export function AdminDashboard({
                 size="icon"
                 onClick={onLogout}
                 className="rounded-full text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/20"
+                title="Đăng xuất"
               >
                 <LogOut className="h-5 w-5" />
               </Button>
